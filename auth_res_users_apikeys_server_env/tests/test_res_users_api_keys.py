@@ -3,11 +3,11 @@
 # @author: Simone Orsi <simone.orsi@camptocamp.com>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 from odoo.exceptions import AccessDenied
-from odoo.tests.common import SavepointCase
+from odoo.tests.common import TransactionCase
 from odoo.tools.config import config
 
 
-class TestAuthApiKey(SavepointCase):
+class TestAuthApiKey(TransactionCase):
     @classmethod
     def setUpClass(cls, *args, **kwargs):
         super().setUpClass(*args, **kwargs)
@@ -17,7 +17,7 @@ class TestAuthApiKey(SavepointCase):
             cls.env["res.users.apikeys"]
             .with_user(cls.demo_user)
             ._generate(
-                f"rpc_{config.get('running_env','test')}",
+                f"rpc_{config.get('running_env', 'test')}",
                 "Test JSONRPC api key",
             )
         )
@@ -42,16 +42,18 @@ class TestAuthApiKey(SavepointCase):
     def test_wrong_user(self):
         admin = self.env.ref("base.user_admin")
         with self.assertRaises(AccessDenied):
-            admin.with_user(admin)._check_credentials(
-                self.secret, {"interactive": True}
-            ),
+            (
+                admin.with_user(admin)._check_credentials(
+                    self.secret, {"interactive": True}
+                ),
+            )
 
     def test_check_credentials_wrong_scope(self):
         self.api_key.scope = "rpc_wrong"
         with self.assertRaises(AccessDenied):
-            self.demo_user._check_credentials(self.secret, {"interactive": True}),
+            (self.demo_user._check_credentials(self.secret, {"interactive": True}),)
 
     def test_check_credentials_no_api_keys(self):
         self.api_key.unlink()
         with self.assertRaises(AccessDenied):
-            self.demo_user._check_credentials(self.secret, {"interactive": True}),
+            (self.demo_user._check_credentials(self.secret, {"interactive": True}),)

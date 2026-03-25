@@ -10,17 +10,16 @@ from odoo.tools.config import config
 
 
 class ResUsers(models.Model):
-
     _inherit = "res.users"
 
     def _check_credentials(self, password, user_agent_env):
         try:
             return super()._check_credentials(password, user_agent_env)
-        except AccessDenied:
+        except AccessDenied:  # pylint: disable=except-pass
             pass
         if (
             self.env["res.users.apikeys"]._check_credentials(
-                scope=f'rpc_{config.get("running_env", "test")}', key=password
+                scope=f"rpc_{config.get('running_env', 'test')}", key=password
             )
             == self.env.uid
         ):
